@@ -40,7 +40,7 @@ app.post("/webhook", async (req, res) => {
 // Call Gemini API
 async function askGemini(userMessage) {
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com//v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
     {
       contents: [{ parts: [{ text: userMessage }] }],
     }
