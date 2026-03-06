@@ -23,16 +23,20 @@ app.get("/webhook", (req, res) => {
 // Receive messages
 app.post("/webhook", async (req, res) => {
   try {
-    const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    const entry = req.body.entry?.[0];
+    const change = entry?.changes?.[0];
+    const message = change?.value?.messages?.[0];
     if (message?.type === "text") {
       const userText = message.text.body;
       const phoneNumber = message.from;
+      console.log("Received message:", userText);
       const reply = await askGemini(userText);
+      console.log("Gemini reply:", reply);
       await sendMessage(phoneNumber, reply);
     }
     res.sendStatus(200);
   } catch (err) {
-    console.error(err);
+    console.error("Error:", err.response?.data || err.message);
     res.sendStatus(500);
   }
 });
@@ -40,9 +44,21 @@ app.post("/webhook", async (req, res) => {
 // Call Gemini API
 async function askGemini(userMessage) {
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com//v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
     {
-      contents: [{ parts: [{ text: userMessage }] }],
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: userMessage }]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.9,
+        maxOutputTokens: 1024,
+      }
+    },
+    {
+      headers: { "Content-Type": "application/json" }
     }
   );
   return response.data.candidates[0].content.parts[0].text;
@@ -55,12 +71,17 @@ async function sendMessage(to, message) {
     {
       messaging_product: "whatsapp",
       to: to,
+      type: "text",
       text: { body: message },
     },
     {
-      headers: { Authorization: `Bearer ${WHATSAPP_TOKEN}` },
+      headers: {
+        Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+        "Content-Type": "application/json"
+      },
     }
   );
 }
 
-app.listen(3000, () => console.log("Bot is running!"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Bot is running on port ${PORT}`));
