@@ -83,5 +83,5 @@ async function sendMessage(to, message) {
   );
 }
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Bot is running on port ${PORT}`));
