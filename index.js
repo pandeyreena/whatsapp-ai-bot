@@ -27,31 +27,31 @@ app.get("/webhook", (req, res) => {
 app.post("/webhook", async (req, res) => {
   console.log("Incoming webhook:", JSON.stringify(req.body, null, 2));
   res.sendStatus(200);
-  
+
   try {
     const entry = req.body?.entry?.[0];
     const change = entry?.changes?.[0];
     const message = change?.value?.messages?.[0];
-    
+
     if (!message || message.type !== "text") return;
-    
+
     const userText = message.text.body;
     const phoneNumber = message.from;
     console.log("Message from:", phoneNumber, "Text:", userText);
 
     const reply = await askGemini(userText);
     console.log("Gemini reply:", reply);
-    
+
     await sendMessage(phoneNumber, reply);
-    console.log("Reply sent!");
-    
+    console.log("Reply sent successfully!");
+
   } catch (err) {
     console.error("Error details:", JSON.stringify(err.response?.data || err.message));
   }
 });
 
 async function askGemini(userMessage) {
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
   const res = await axios.post(url, {
     contents: [{ role: "user", parts: [{ text: userMessage }] }]
   });
@@ -76,5 +76,5 @@ async function sendMessage(to, body) {
   );
 }
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Bot running on port ${PORT}`));
